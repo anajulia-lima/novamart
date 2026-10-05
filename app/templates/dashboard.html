@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}NovaMart - Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .iframe-container {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--r-lg);
+        padding: 1rem;
+        min-height: 80vh;
+        display: flex;
+        flex-direction: column;
+    }
+    .iframe-container iframe {
+        flex: 1;
+        border: none;
+        border-radius: 8px;
+        min-height: 75vh;
+    }
+    .embed-placeholder {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 60vh;
+        color: var(--text-secondary);
+    }
+    .embed-placeholder i {
+        font-size: 4rem;
+        margin-bottom: 1.5rem;
+        color: var(--primary);
+        opacity: 0.5;
+    }
+    .embed-placeholder h4 {
+        color: var(--text);
+        margin-bottom: 0.5rem;
+    }
+    .embed-placeholder code {
+        display: block;
+        padding: .5rem 1.1rem;
+        font-size: .82rem;
+        margin-top: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Dashboard</h2>
+    <p>Dashboard interativo via Metabase</p>
+</div>
+
+<div class="iframe-container">
+    <!--
+    =====================================================
+    INSTRUÇÕES PARA EMBED DO METABASE:
+    =====================================================
+    1. Acesse seu Metabase (http://localhost:3000)
+    2. Abra o dashboard desejado
+    3. Clique em "Sharing" > "Embed in your application"
+    4. Copie o iframe URL
+    5. Substitua o placeholder abaixo pelo iframe:
+
+    <iframe
+        src="http://localhost:3000/embed/dashboard/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyZXNvdXJjZSI6eyJkYXNoYm9hcmQiOjJ9LCJwYXJhbXMiOnt9LCJleHAiOjE3OTA4OTgwOTZ9.CSXvpAeABRsAK2jGWly1JRuRik4myZsxebSvWm3YUFk#bordered=true&titled=true"
+        frameborder="0"
+        width="100%"
+        height="100%"
+        allowtransparency
+    ></iframe>
+    =====================================================
+    -->
+
+    <div class="embed-placeholder">
+    <iframe
+        src="http://44.200.231.152:3000/embed/dashboard/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyZXNvdXJjZSI6eyJkYXNoYm9hcmQiOjJ9LCJwYXJhbXMiOnt9LCJleHAiOjE4NTEwMzE3NDR9.G3rSUvoeKNCFt1J8pGZ9KGXU0QPX7VwHmd8_Sp0-v0c#bordered=true&titled=true"
+        frameborder="0"
+        width="100%"
+        height="100%"
+        allowtransparency
+    ></iframe>
+    </div>
+</div>
+{% endblock %}
