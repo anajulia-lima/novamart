@@ -9,7 +9,10 @@ Main web application with:
 
 import io
 import os
+import secrets
+import time
 from datetime import datetime
+from urllib.parse import urlsplit
 
 try:
     from dotenv import load_dotenv
@@ -617,4 +620,9 @@ def orders_new():
 
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0',debug=True, port=5000)
+    debug = os.getenv("FLASK_DEBUG", "").lower() in {"1", "true"}
+    host = os.getenv("FLASK_HOST", "127.0.0.1")
+    port = int(os.getenv("FLASK_PORT", "5000"))
+    if debug and os.getenv("APP_ENV", "").lower() == "production":
+        raise RuntimeError("FLASK_DEBUG não pode ser ativado em produção.")
+    app.run(host=host, debug=debug, port=port)

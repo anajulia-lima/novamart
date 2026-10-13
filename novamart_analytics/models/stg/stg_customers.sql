@@ -8,6 +8,7 @@ padronizado as (
         lower(email) as email,
         cidade,
         estado, 
+        indicado_por_id_cliente,
         criado_em
     from source
 )

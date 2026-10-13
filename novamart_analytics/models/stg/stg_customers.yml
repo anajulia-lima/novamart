@@ -1,0 +1,8 @@
+models:
+  - name: stg_customers
+    columns:
+      - name: indicado_por_id_cliente
+        tests:
+          - relationships:
+              to: ref('stg_customers')
+              field: id_cliente

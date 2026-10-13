@@ -1,108 +1,113 @@
 # NovaMart
 
-Projeto de marketplace fictício para explorar um fluxo de dados de ponta a ponta: aplicação web em Flask, banco PostgreSQL com dados sintéticos e modelos analíticos dbt.
+Marketplace fictício para praticar desenvolvimento web e engenharia analítica de ponta a ponta: aplicação Flask, PostgreSQL, ingestão simulada, transformações dbt, testes de qualidade e dashboards no Metabase.
 
-## Funcionalidades
+> Projeto educacional com dados sintéticos. Não foi preparado para uso em produção.
 
-- Cadastro, consulta e edição de clientes, vendedores, produtos e pedidos.
-- Página inicial com indicadores do marketplace e pedidos recentes.
-- Relatórios mensais exportados em PDF.
-- Página preparada para incorporar um dashboard do Metabase.
-- Geração de dados sintéticos com casos intencionais de qualidade de dados para análise.
-- Transformações dbt em camadas de staging, intermediate e marts, incluindo uma fato de itens de pedido e análise de Pareto de produtos.
-- Pipeline opcional para ingestão, execução dos modelos e testes dbt, geração da documentação e alertas no Discord.
+## Arquitetura
 
-## Tecnologias
+![Diagrama da arquitetura NovaMart](./novamart_diagram.png)
 
-- Python, Flask, Jinja2 e ReportLab
-- PostgreSQL e psycopg2
-- dbt Core com adaptador PostgreSQL (`dbt-postgres`)
-- Metabase (incorporação do dashboard configurada à parte)
+Arquivo editável: [`novamart_diagram.drawio`](./novamart_diagram.drawio).
 
-## Pré-requisitos
+```text
+Usuário → Flask → PostgreSQL (app)
+                     ↓
+Cron → ingestão → dbt (stg → int → marts) → Metabase
+                       └→ testes, logs e alerta opcional no Discord
+```
 
-- Python e `pip`
+## O que o projeto faz
+
+- Aplicação web para consultar e cadastrar clientes, vendedores, produtos e pedidos; exibe indicadores e pedidos recentes e gera relatórios mensais em PDF.
+- Banco PostgreSQL com entidades de marketplace e dados fictícios gerados para exploração.
+- Pipeline de analytics dbt:
+  - **stg:** views para padronizar os dados da origem;
+  - **int:** modelos incrementais de pedidos, itens e pagamentos enriquecidos;
+  - **marts:** fato de itens de pedido e relatório de Pareto de produtos.
+- Simulador de ingestão contínua e orquestrador para executar ingestão, builds dbt, documentação e alertas.
+- Rota `/dashboard` preparada para incorporar um dashboard assinado do Metabase.
+
+## Ferramentas e práticas exploradas
+
+Python, Flask, Jinja2, PostgreSQL, SQL, psycopg2, dbt Core, `dbt-postgres`, Metabase, cron, Discord Webhooks, testes automatizados, modelos incrementais, análise exploratória e geração de PDF.
+
+## Qualidade de dados
+
+Os testes dbt ajudam a detectar dados inválidos antes do consumo analítico:
+
+- `not_null` para identificadores e campos essenciais de pedidos;
+- `accepted_values` para status de pedidos e pagamentos;
+- `relationships` para validar se o cliente que indicou outro cliente existe;
+- teste singular `assert_order_item_price_matches_quantity`, que compara preço total com quantidade × preço unitário;
+- flags analíticas para sinalizar margem negativa e datas ausentes.
+
+`scripts/inject_bad_data.py` insere casos inválidos intencionalmente para exercitar os testes. O teste singular de preço ignora atualmente o pedido `517`; essa exceção é específica dos dados de demonstração e deve ser revisada se as regras ou os dados mudarem. O teste de status em `stg_orders.yml` está com severidade `warn`. Os testes detectam problemas, mas a correção deve ser feita na tabela de origem `app`, não na view dbt.
+
+## Executar localmente
+
+### Pré-requisitos
+
+- Python 3 e `pip`
 - PostgreSQL
-- Para executar as transformações: dbt Core e o adaptador `dbt-postgres`
-- Para usar alertas do pipeline: URL de webhook do Discord (opcional)
+- Para transformações: dbt Core com adaptador PostgreSQL
+- Opcional: Metabase para o dashboard e webhook do Discord para alertas
 
-## Configuração local
-
-1. Clone o repositório e entre na pasta do projeto:
-
-   ```bash
-   git clone https://github.com/anajulia-lima/novamart.git
-   cd novamart
-   ```
-
-2. Crie e ative um ambiente virtual e instale as dependências da aplicação:
-
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate
-   pip install -r requirements.txt
-   ```
-
-   No Windows, ative o ambiente com `venv\Scripts\activate`.
-
-3. Crie um banco PostgreSQL vazio chamado `nova_market` (ou escolha outro nome) e configure a conexão em um arquivo `.env` na raiz:
-
-   ```dotenv
-   DATABASE_URL=postgresql://postgres:SUA_SENHA@localhost:5432/nova_market
-   ```
-
-   Como alternativa, configure `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` e `DB_PASS`. O arquivo `.env` não deve ser enviado ao Git.
-
-4. Crie as tabelas e gere a carga inicial de dados sintéticos:
-
-   ```bash
-   python scripts/create_tables.py
-   python scripts/generate_seed_data.py
-   ```
-
-   A carga cria um conjunto fictício de clientes, vendedores, produtos, pedidos, pagamentos e avaliações, incluindo inconsistências planejadas para os exercícios de qualidade de dados.
-
-5. Inicie a aplicação:
-
-   ```bash
-   python app/app.py
-   ```
-
-   Acesse [http://localhost:5000](http://localhost:5000). A aplicação espera encontrar as tabelas no schema `app`. A página de dashboard também depende de uma URL de incorporação válida do Metabase.
-
-## Dados e análises
-
-O projeto inclui materiais de exploração e regras de negócio:
-
-- `Modulo3_EDA_Script.sql` e `Modulo3_DUVIDAS_EDA.md`: consultas e anotações de exploração dos dados.
-- `Business Rules.md` e `scripts/BUSINESS_RULES.md`: decisões de negócio e tratamento de casos de qualidade.
-- `scripts/inject_bad_data.py`: ferramenta para injetar casos de dados inválidos durante os exercícios.
-- `scripts/continuous_ingestion.py`: simulador de ingestão de novos pedidos.
-
-Para executar a ingestão uma vez, com cinco pedidos (padrão):
+### Instalar e preparar o banco
 
 ```bash
-python scripts/continuous_ingestion.py
-```
+git clone https://github.com/anajulia-lima/novamart.git
+cd novamart
 
-É possível definir o volume ou repetir a ingestão em intervalos:
-
-```bash
-python scripts/continuous_ingestion.py --orders 10
-python scripts/continuous_ingestion.py --loop 60
-```
-
-## dbt e pipeline
-
-Instale as dependências adicionais usadas pelo fluxo analítico:
-
-```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
 pip install dbt-postgres requests
 ```
 
-Configure o perfil dbt `novamart_analytics` em `~/.dbt/profiles.yml` para apontar ao mesmo banco PostgreSQL. O projeto dbt está em `novamart_analytics/`, lê as tabelas do schema `app` e organiza os modelos em `stg`, `int` e `marts`.
+Crie um banco PostgreSQL chamado `novamart` e configure a conexão no `.env` local:
 
-Com o perfil configurado, execute os modelos e testes:
+```bash
+cp .env.example .env
+```
+
+Edite `.env` e informe usuário, senha e chaves próprias. O arquivo está ignorado pelo Git; não o adicione ao commit. Crie o schema e as tabelas e gere os dados sintéticos:
+
+```bash
+python scripts/create_tables.py
+python scripts/generate_seed_data.py
+```
+
+### Iniciar o Flask
+
+```bash
+python app/app.py
+```
+
+Por padrão, a aplicação escuta apenas em `127.0.0.1:5000`, sem modo debug. Abra <http://localhost:5000>.
+
+Para habilitar o embed, configure no `.env` `METABASE_SITE_URL`, `METABASE_DASHBOARD_ID` e `METABASE_SECRET_KEY`. O servidor Flask assina um token com validade de 10 minutos para cada carregamento do dashboard; a URL do Metabase deve ser acessível pelo navegador que abre a aplicação. Para acesso remoto, `localhost` aponta para o computador do usuário, não para o servidor.
+
+### Executar dbt
+
+Configure o perfil `novamart_analytics` em `~/.dbt/profiles.yml`, apontando para o banco `novamart` e as credenciais PostgreSQL. Esse arquivo é local e não deve ser versionado:
+
+```yaml
+novamart_analytics:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: localhost
+      port: 5432
+      user: postgres
+      password: "sua-senha-local"
+      dbname: novamart
+      schema: novamart_analytics
+      threads: 2
+```
+
+Execute os modelos e testes:
 
 ```bash
 cd novamart_analytics
@@ -110,25 +115,39 @@ dbt build
 dbt docs generate
 ```
 
-O orquestrador `scripts/run_pipeline.py` coordena a ingestão, constrói as camadas dbt em sequência e gera a documentação ao final. Para alertas, acrescente `DISCORD_WEBHOOK_URL` ao `.env`. A execução desse orquestrador usa caminhos absolutos definidos no próprio script; ajuste-os para o ambiente antes de usá-lo:
+### Ingestão e pipeline
+
+Execute uma ingestão isolada ou ajuste o volume:
+
+```bash
+python scripts/continuous_ingestion.py
+python scripts/continuous_ingestion.py --orders 10
+```
+
+Para executar a pipeline completa:
 
 ```bash
 python scripts/run_pipeline.py
 python scripts/run_pipeline.py --full-refresh
 ```
 
-## Estrutura do projeto
+Antes de usar `scripts/run_pipeline.py` em outro ambiente, ajuste os caminhos absolutos do Python, dbt, projeto, script de ingestão e logs definidos no início do arquivo. Para automatizar, configure cron no servidor; o projeto não instala nem configura o agendador. Exemplo a cada dois minutos, após substituir os caminhos:
 
-```text
-app/                    Aplicação Flask, acesso ao banco e templates
-novamart_analytics/      Projeto dbt, fontes, modelos e seed de categorias
-scripts/                Criação do schema, dados sintéticos e pipeline
-Modulo3_EDA_Script.sql   Consultas de exploração dos dados
-requirements.txt        Dependências Python da aplicação e dos scripts
+```cron
+*/2 * * * * /caminho/do/projeto/venv/bin/python3 /caminho/do/projeto/scripts/run_pipeline.py >> /caminho/do/projeto/logs/cron.log 2>&1
 ```
 
-## Observações
+## Segurança antes da publicação
 
-- Os dados são sintéticos e destinados a demonstração, estudo e exploração analítica.
-- `requirements.txt` lista as dependências Python da aplicação e dos scripts; dbt e `requests` são instalados à parte para o pipeline.
-- A chave secreta Flask e o endereço de incorporação do Metabase precisam ser configurados adequadamente antes de qualquer uso público ou em produção.
+O código atual lê a chave do Flask e a chave de assinatura do Metabase do ambiente; use `.env.example` como referência e nunca versione `.env`, chaves, tokens ou webhooks. A chave de assinatura e um token do Metabase apareceram em commits anteriores. **Antes de tornar o repositório público, revogue/rotacione a chave no Metabase e remova os segredos do histórico Git**; removê-los apenas do último commit não é suficiente. O servidor Flask embutido é apenas para desenvolvimento; para qualquer implantação, use um servidor WSGI, HTTPS, autenticação, regras de rede restritivas e `FLASK_DEBUG=false`.
+
+## Estrutura
+
+```text
+app/                    Aplicação Flask, templates e acesso ao banco
+scripts/                DDL, dados sintéticos, ingestão e orquestração
+novamart_analytics/     Modelos, testes, seeds e projeto dbt
+novamart_diagram.drawio Diagrama de arquitetura editável
+novamart_diagram.png    Imagem do diagrama
+Modulo3_EDA_Script.sql  Consultas de análise exploratória
+```
