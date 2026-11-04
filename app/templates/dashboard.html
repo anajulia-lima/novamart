@@ -25,7 +25,6 @@
         justify-content: center;
         min-height: 60vh;
         color: var(--text-secondary);
-        text-align: center;
     }
     .embed-placeholder i {
         font-size: 4rem;
@@ -36,6 +35,12 @@
     .embed-placeholder h4 {
         color: var(--text);
         margin-bottom: 0.5rem;
+    }
+    .embed-placeholder code {
+        display: block;
+        padding: .5rem 1.1rem;
+        font-size: .82rem;
+        margin-top: 1rem;
     }
 </style>
 {% endblock %}
@@ -54,8 +59,7 @@
         frameborder="0"
         width="100%"
         height="100%"
-        loading="lazy"
-        referrerpolicy="no-referrer"
+        allowtransparency
     ></iframe>
     {% else %}
     <div class="embed-placeholder">

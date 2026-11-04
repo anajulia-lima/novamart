@@ -6,9 +6,7 @@ Marketplace fictício para praticar desenvolvimento web e engenharia analítica 
 
 ## Arquitetura
 
-![Diagrama da arquitetura NovaMart](./novamart_diagram.png)
-
-Arquivo editável: [`novamart_diagram.drawio`](./novamart_diagram.drawio).
+![Diagrama da arquitetura NovaMart](./novamart_diagram.PNG)
 
 ```text
 Usuário → Flask → PostgreSQL (app)
